@@ -50,7 +50,7 @@ jobs:
           - arch: arm64
             runner: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: docker/setup-buildx-action@v3
 
@@ -109,7 +109,7 @@ jobs:
     steps:
       # Tags are needed to read the annotation the publisher wrote: that message *is* the
       # note, so the release says what changed without a second place to keep it.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
