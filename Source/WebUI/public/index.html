@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>INFOCompanion — screens</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body data-mode="home">
+  <div class="sheet">
+    <div class="masthead">
+      <h1>INFOCOMPANION</h1>
+      <span class="aside">two friends, one keyboard, 1983</span>
+      <a class="repo" href="https://github.com/Hyper-Dragon/INFOCompanion">source</a>
+    </div>
+
+    <div class="intro">
+      <div class="prose">
+        <p><strong>One game, one companion, one person at a keyboard.</strong> The daemon
+        holds the session; the companion sits beside you in it. Everything on this page is a
+        window onto that one session, and nothing more.</p>
+
+        <p>Over SSH those windows are chosen by login name. Here they are panes, in one tab,
+        with nothing in between — the same bytes the daemon would have sent down three
+        separate connections, drawn on the same screens.</p>
+
+        <p>There is <strong>no password and no sign-in</strong>: one page, one session, one
+        person. If that is not what you want, put it behind a proxy that asks for something.
+        Nothing here can tell who you are, and it does not try.</p>
+      </div>
+
+      <div class="card">
+        <h2>Choose a screen</h2>
+        <a class="row" href="/term">
+          <span class="key">ONE</span>
+          <span class="what">everything at once — the fallback, and how it always worked</span>
+          <span class="go">→</span>
+        </a>
+        <a class="row" href="/multiterm">
+          <span class="key">THREE</span>
+          <span class="what">the game, your companion, and your own hands</span>
+          <span class="go">→</span>
+        </a>
+        <a class="row" href="/games">
+          <span class="key">GAMES</span>
+          <span class="what">what has been played here, and the write-up for coming back to it</span>
+          <span class="go">→</span>
+        </a>
+        <div class="foot">
+          Three panes are three logins to one session, exactly as the SSH panes are: the game
+          pane cannot type, the companion pane is read-only too, and the pane you type in is
+          the one that talks. The third is not a screen: it is the list of games this instance
+          has played, each with a <em>generate</em> button that has the companion write the game
+          up — where you are, what is left, what is solved, and the map — for a return after
+          months.
+        </div>
+      </div>
+    </div>
+
+    <h2>The same session, as logins</h2>
+    <div class="panes single">
+      <div class="cell">
+        <div class="monitor">
+          <img class="shell" src="assets/frame.svg" alt="">
+          <div class="screen">
+            <div class="printed">INFOCOMPANION
+<span class="dim">──────────────────────────────────────────────────────────────</span>
+  <span class="amber">the game</span>       ssh game@host -p 2223
+                 what the story printed, and nothing else
+
+  <span class="amber">the companion</span>  ssh companion@host -p 2223
+                 what your friend says, and what it is thinking
+
+  <span class="amber">your hands</span>     ssh me@host -p 2223
+                 a prompt, and the answers to your own commands
+
+  <span class="amber">all of it</span>      ssh player@host -p 2223
+                 one window, as it was before any of this
+
+<span class="dim">the panes are views of one session, not copies of it.</span></div>
+          </div>
+          <div class="glass"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

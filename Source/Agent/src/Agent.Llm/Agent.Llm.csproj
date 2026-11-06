@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Agent.Llm</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Nothing outside the framework: the LLM surface is a thin HttpClient, which
+       is the whole point (§9.3). -->
+
+</Project>

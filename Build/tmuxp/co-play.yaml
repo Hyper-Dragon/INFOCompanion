@@ -1,0 +1,41 @@
+# INFOCompanion — three-pane co-play layout
+#
+#   tmuxp load Build/tmuxp/co-play.yaml
+#
+# The layout the game actually wants: the game on the left, Quill's conversation beside
+# it, and a line to type in underneath. Each pane is just an SSH connection with a
+# different login name, and the daemon decides what that name is shown:
+#
+#   game  ->  the game's own text, uninterrupted
+#   quill ->  everything that is not the game: its words, its proposals, session notices
+#   me    ->  nothing (your keystrokes echo where you type them)
+#   player->  everything, in one window, as before
+#
+# So mixing the game with the companion was a choice, not a constraint. Change `game` and
+# `me` to `player` if you would rather have one window.
+#
+# The daemon's own log and the agent's JSONL still live in the operator layout
+# (Build/tmuxp/infocompanion.yaml), which is worth a second window rather than a fourth pane.
+
+session_name: infocompanion
+
+windows:
+  - window_name: play
+    layout: main-vertical
+    focus: true
+    panes:
+      # The game: pristine. Nothing the companion says can interrupt this scroll.
+      - shell_command:
+          - "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR game@localhost -p 2223"
+        start_directory: "."
+
+      # Quill: what it says, what it proposes, and the session's notices.
+      - shell_command:
+          - "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR quill@localhost -p 2223"
+        start_directory: "."
+
+      # You: type here. Anything without a leading `/` goes to Quill; `/type north` sends
+      # one command straight to the game, and `/plan`, `/notes`, `/think` are the peepholes.
+      - shell_command:
+          - "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR me@localhost -p 2223"
+        start_directory: "."

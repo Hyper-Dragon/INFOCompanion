@@ -1,0 +1,26 @@
+# Rust
+/target
+/Source/Core/target
+/Source/WebUI/target
+
+# .NET
+**/bin/
+**/obj/
+*.user
+
+# Local runtime state: checkpoints, notebooks and session logs (§5.4). Host storage
+# stays predictable, and no game progress belongs in the repository.
+/state/
+
+# Secrets: the model API key never enters the repo, the image, or the config file.
+.env
+
+# Scratch scripts and captured output used while developing.
+ai_scratchspace/
+
+# Story files are never tracked — `Assets/games/.gitignore` holds that rule, beside the directory
+# it is about. The compiled Zork I is an artifact of the image build; the rest are the player's.
+
+# The implementation plan is a working document, not part of the document set: it sits beside the
+# specs, is struck through as blocks land, and is never committed.
+Documents/implement_dont_checkin_plan.md

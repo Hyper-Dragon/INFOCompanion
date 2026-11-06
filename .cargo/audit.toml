@@ -1,0 +1,38 @@
+# `cargo audit` configuration. It looks for this file at `.cargo/audit.toml` in the current
+# working directory, so run the audit from the repository root:
+#
+#   docker run --rm -v "$PWD":/w -w /w rust:1.93 bash -c \
+#     'cargo install cargo-audit --locked --quiet && cargo audit --file Source/Core/Cargo.lock'
+#
+# A container rather than the host shell because cargo-audit pulls in `aws-lc-sys`, which
+# refuses to build with the gcc 9.4 that ships in this WSL image (it names the memcmp bug in
+# gcc 95189 and stops). `O11` carries the same command.
+
+[advisories]
+ignore = [
+    # The Marvin attack is a timing side channel on an RSA *decryption*. This server generates
+    # an ed25519 host key (Source/Core/src/ssh.rs, `KeyPair::generate_ed25519`) and offers password
+    # authentication only (`MethodSet::PASSWORD`), so no RSA private key exists in the process
+    # and no RSA decryption happens on any path a peer can reach. `rsa` arrives transitively
+    # through the SSH key crates and is never called. There is no fixed upgrade: the advisory
+    # says so itself, which is why the answer is a checked reason rather than a version.
+    #
+    # If RSA is ever used here — a host key, a client key we verify, a signature we check — take
+    # this line out rather than leaving a blind spot behind it.
+    "RUSTSEC-2023-0071",
+
+    # NOT ignored, and deliberately so: RUSTSEC-2026-0154 and RUSTSEC-2026-0153 are live. They
+    # are fixed only by russh >= 0.60.3, this crate pins 0.45, and the jump is fifteen minor
+    # versions of the transport — a rewrite of the API this project uses — so it is out of scope
+    # here and the reasoning is recorded in `O11`. Adding them to this
+    # list would turn a real remote allocation defect into a tidy-looking audit.
+    #
+    # Those two are the ones RustSec names, and they are not the whole set: the GitHub advisory
+    # database carries twelve distinct advisories against the same pinned 0.45 — twenty-six
+    # alerts, because both lockfiles pin it (Core and WebUI) and one advisory also names
+    # `russh-cryptovec`. Every one of them is cleared by the same single upgrade, so the count
+    # sets the size of the debt rather than the decision. What bounds the risk is the container's
+    # memory cap (`O11.1`): a successful attack costs a restart,
+    # not the host. Written here, beside the ignore, because that is where `O11.1` says an
+    # auditor should find it rather than in a document.
+]

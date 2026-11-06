@@ -1,0 +1,20 @@
+<Project>
+
+  <!-- Settings shared by every agent project. The agent targets the .NET LTS and
+       is published self-contained, so the container needs no .NET runtime. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The agent never formats culture-specific data; this keeps the published
+         binary free of ICU and therefore runs on a slim base image. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- Dangling awaits and unobserved exceptions in a background agent would be
+         silent, so warnings that indicate real bugs stay on. -->
+    <WarningsAsErrors>CS4014;CS8600;CS8602;CS8604</WarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

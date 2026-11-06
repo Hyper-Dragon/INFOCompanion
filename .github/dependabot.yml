@@ -1,0 +1,68 @@
+# Keep the toolchains and the actions current without a manual sweep.
+#
+# Grouped by kind, so a week of patch bumps arrives as one pull request rather than nine.
+#
+# The container build is monthly rather than weekly: a new base image means a rebuild of the
+# interpreter, the story and the agent, and that is a release decision, not a chore.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/Source/Core"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - patch
+          - minor
+    ignore:
+      # `russh` is deliberately held at 0.45. The fix for the open advisories is 0.60.3 and the
+      # jump is fifteen minor versions of the transport — a rewrite of the API this project
+      # *serves* with and the bridge *speaks* as a client. That is a branch and a session, not a
+      # dependency bump. What bounds the risk meanwhile is the container's memory cap: a
+      # successful attack costs a restart, not the host. `.cargo/audit.toml` carries the same
+      # reasoning beside the ignore list, which is where the audit reads it.
+      - dependency-name: russh
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: cargo
+    directory: "/Source/WebUI"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - patch
+          - minor
+    ignore:
+      # The same pinned transport as the core, for the same reason.
+      - dependency-name: russh
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: nuget
+    directory: "/Source/Agent"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - patch
+          - minor
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: docker
+    directory: "/Build"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3

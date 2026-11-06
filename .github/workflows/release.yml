@@ -1,0 +1,129 @@
+# Build the release image on GitHub's own runners, and publish it beside the tag.
+#
+# This repository is a release tree: the private repository sends it one commit per release
+# (`Build/publish.sh` there), so a tag here means a release and nothing else. Nothing is
+# emulated — two native runners build the two architectures (`ubuntu-24.04-arm` costs nothing
+# for a public repository), which is what `Build/Dockerfile` expects: it reads `TARGETARCH` and
+# fetches the matching ZILF tarball and publishes the matching .NET runtime. Under emulation
+# that file could not build at all.
+#
+# Each runner pushes its own image, and a manifest list joins them, so
+# `docker pull ghcr.io/<owner>/<repo>:<tag>` picks the right one on either machine. The
+# per-architecture tags stay behind on purpose: pinning one is occasionally what you want.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to publish as a release
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  image:
+    name: image ${{ matrix.arch }}
+    # This file travels with the release tree, so it exists in both repositories. Only the
+    # public one is what these images are for: a tag in the private trunk must not build here,
+    # both because those builds are what `build_and_push` is for and because the minutes are
+    # billable in a private repository.
+    if: github.event.repository.private == false
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # GHCR requires a lowercase path and this repository's name is not lowercase.
+      - name: Name the image
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Build/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.TAG }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ env.TAG }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+
+  manifest:
+    name: manifest
+    needs: image
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Name the image
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Join the two architectures into one tag
+        run: |
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${TAG}" \
+            --tag "${IMAGE}:latest" \
+            "${IMAGE}:${TAG}-amd64" \
+            "${IMAGE}:${TAG}-arm64"
+
+  release:
+    name: release
+    needs: manifest
+    if: github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    steps:
+      # Tags are needed to read the annotation the publisher wrote: that message *is* the
+      # note, so the release says what changed without a second place to keep it.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Name the image
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git for-each-ref --format='%(contents)' "refs/tags/${TAG}" > "$RUNNER_TEMP/notes.md"
+          {
+            printf '\n---\n\n'
+            printf 'Container image: `%s:%s`\n\n' "$IMAGE" "$TAG"
+            printf 'One tag, both architectures — `docker pull` picks the right one.\n'
+          } >> "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --title "$TAG" --verify-tag --notes-file "$RUNNER_TEMP/notes.md"

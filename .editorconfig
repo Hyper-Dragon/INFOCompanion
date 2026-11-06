@@ -1,0 +1,38 @@
+# Editor defaults, so that what a file looks like when you save it here is what the repository
+# stores. This mirrors `.gitattributes`: LF everywhere, with the two exceptions named there.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Prose keeps its CRLF (it is written at a Windows keyboard — `.gitattributes` has the reasons),
+# and a trailing double space is a line break in markdown, so do not strip those either.
+[*.md]
+end_of_line = crlf
+trim_trailing_whitespace = false
+
+[*.{js,css,html,json}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+# A shell script saved with CRLF does not run in the container — the kernel sees a `\r` in the
+# shebang line. Two spaces, as the scripts here are written.
+[*.sh]
+indent_size = 2
+
+[Makefile*]
+indent_style = tab
+
+# The vendored interpreter is somebody else's source (VENDOR.md); leave its bytes as they were.
+[Source/dFrotzTooled/**]
+end_of_line = unset
+
+[{*.cs,*.csproj,*.sln,Directory.Build.props}]
+indent_size = 4

@@ -1,0 +1,69 @@
+{
+  "base_url": "https://api.deepseek.com",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "temperature": 0.7,
+  "max_tokens": 16000,
+  "context_window_tokens": 65536,
+  "max_tokens_share_by_role": { "reply": 0.25, "write": 0.5 },
+  "max_tokens_by_purpose": {},
+  "top_p": 0.9,
+  "presence_penalty": 0.2,
+  "frequency_penalty": 0.2,
+  "request_timeout_seconds": 60,
+
+  "pricing": {
+    "models": {
+      "deepseek-flash": {
+        "off_peak": { "cache_hit": 0.003, "cache_miss": 0.15, "output": 0.60 },
+        "peak": { "cache_hit": 0.006, "cache_miss": 0.30, "output": 1.20 }
+      },
+      "deepseek-v4-pro": {
+        "off_peak": { "cache_hit": 0.022, "cache_miss": 0.66, "output": 1.98 },
+        "peak": { "cache_hit": 0.044, "cache_miss": 1.32, "output": 3.96 }
+      }
+    },
+    "peak_windows_utc": [[1, 4], [6, 10]],
+    "peak_weekdays_only": true
+  },
+
+  "stream": true,
+  "max_retries": 3,
+
+  "thinking": { "type": "enabled", "off_for_maintenance": false, "off_for": [] },
+  "reasoning_effort": "low",
+
+  "transcript_turns": 40,
+  "transcript_token_budget": 24000,
+  "fixed_token_budget": 24000,
+  "local_tool_rounds": 4,
+  "game_brief_max_chars": 32000,
+  "recall_max_hits": 10,
+  "recall_quote_chars": 240,
+  "reconcile_recent_turns": 60,
+  "floor_companion_lines": 3,
+  "floor_recent_items": 5,
+  "notebook_token_budget": 6000,
+  "idle_nudge_seconds": 50,
+  "out_loud_seconds": 300,
+  "player_patience_seconds": 90,
+  "player_typing_window_seconds": 4,
+  "unprompted_cooldown_turns": 3,
+  "unattended_call_limit": 4,
+  "maintenance_call_limit": 6,
+  "working_indicator_seconds": 8,
+  "reconcile_min_quiet_seconds": 60,
+  "mission_budget": 8,
+  "mission_budget_delegated": 10000,
+  "session_cost_limit_usd": 2.0,
+  "auto_allow_below": "medium",
+  "notebook_rewrite_min_seconds": 90,
+  "veto_cooldown_seconds": 90,
+  "circles_threshold": 2,
+  "persona": "james",
+  "persona_directory": "/prompts/persona",
+  "engine_path": "/prompts/engine.txt",
+  "log_keep": 20,
+  "llm_failure_pause_seconds": 120,
+  "turn_flight_seconds": 120
+}

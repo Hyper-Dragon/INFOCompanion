@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/Hyper-Dragon/INFOCompanion/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue. See SECURITY.md.
+  - name: How do I run it?
+    url: https://github.com/Hyper-Dragon/INFOCompanion/blob/main/README.md
+    about: Requirements, installation, configuration and the known issues are all in the README.

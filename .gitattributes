@@ -1,0 +1,46 @@
+# Line endings, pinned so they cannot drift. The repository is read and edited on Windows and
+# built on Linux, and before this file the two had quietly disagreed: 130 of the 333 tracked
+# files were CRLF and 188 were LF, with no rule behind either (a `cargo fmt` run once rewrote a
+# four-line edit as a 450-line file because the file it touched was CRLF).
+#
+# One rule: LF everywhere. That is what the image runs — anything executed inside the container
+# (Build/docker/*.sh, Build/tests/*.sh, Build/tmuxp/*.yaml) fails on CRLF with a `\r` error that
+# reads like a missing file — and it is what every tool here writes. `git ls-files --eol` is the
+# check; a fresh clone should report LF for everything except the two exceptions below.
+* text=auto eol=lf
+
+# Exception 1 — the vendored interpreter. dFrotzTooled is upstream Frotz 2.54 plus one patch,
+# and VENDOR.md documents where it came from; its bytes are its provenance, so we do not
+# normalise them even though nothing would break if we did.
+Source/dFrotzTooled/** -text
+
+# Exception 2 — the game sidecars. These are prose written at a Windows keyboard, so they are
+# checked out with the line endings that keyboard produces. They are still stored as LF like
+# everything else, and nothing but their checkout is different: Documents/02_game_boundary.md §4.4
+# describes what goes in them.
+Assets/games/*.md text eol=crlf
+
+# Exception 3 — the rendered documents. PDFs are bytes: `text=auto` sniffs them as binary anyway,
+# and this says so rather than leaving the checkout dependent on a sniff. `Build/docs-pdf.sh`
+# regenerates them from the markdown, which is the source of truth.
+Documents/pdf/** -text
+
+# What the public release leaves behind. `Build/publish.sh` builds the release tree with
+# `git archive`, which drops every path marked `export-ignore` — so this line, and not a list of
+# paths inside a script, is what says the design set is private. It also keeps the set and its
+# rendered PDFs out of GitHub's own archive download of any tag, which is the other way the
+# whole directory would otherwise travel.
+Documents/ export-ignore
+
+# And the publisher itself: it cuts the release, it is not part of one. In the public tree it
+# could only describe a repository the reader cannot see.
+Build/publish.sh export-ignore
+
+# Internal working notes. They name files a reader of the release tree will not have, and they
+# are a record of one evening's testing rather than documentation of the software.
+Build/uat-findings-20260929.md export-ignore
+Build/uat-runbook.md export-ignore
+
+# The maintainer's half of the README: architecture, the full configuration and command
+# reference, and how the thing is built and tested. The public README is the short one.
+README-private.md export-ignore

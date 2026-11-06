@@ -1,0 +1,45 @@
+[package]
+name = "infocompanion"
+version = "0.2.0"
+edition = "2021"
+description = "INFOCompanion core: a seat bus fronting a single Frotz process, with a co-play agent seat"
+authors = ["INFOCompanion Team"]
+
+[dependencies]
+# Async runtime. We drive dfrotz over plain OS pipes (see src/frotz.rs for why),
+# so we need process/io-util but not a PTY crate.
+tokio = { version = "1.35", features = [
+    "rt-multi-thread",
+    "macros",
+    "process",
+    "io-util",
+    "io-std",
+    "fs",
+    "sync",
+    "time",
+    "signal",
+    "net",
+] }
+
+# SSH server (russh's Handler trait is async-trait based)
+russh = "0.45"
+russh-keys = "0.45"
+async-trait = "0.1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Error handling
+anyhow = "1.0"
+
+# Serialization (seat protocol)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Configuration
+clap = { version = "4.4", features = ["derive", "env"] }
+
+[[bin]]
+name = "infocompanion"
+path = "src/main.rs"
