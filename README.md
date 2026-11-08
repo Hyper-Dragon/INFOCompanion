@@ -4,8 +4,6 @@
 
 ## 'Two friends, one keyboard, a green screen and a flashing cursor, on a cold night in 1983.'
 
-If it does not feel like that, the project has failed.
-
 A shared interactive-fiction shell with a **co-player**: a language model that sits at the same
 terminal, shares the keyboard, and plays *with* you rather than *for* you.
 
