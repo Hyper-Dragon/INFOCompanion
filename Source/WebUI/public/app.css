@@ -1,0 +1,656 @@
+/* INFOCompanion web interface — the room, the plastic, and the phosphor.
+ *
+ * The aesthetic in one line: the institutional calm of a Severance corridor holding a 1983
+ * PC. Everything here is beige plastic lit from above, dark glass, and letterspaced signage;
+ * the only saturated thing on the page is the amber of a lamp that lights when a pane is
+ * busy, because in a room like this nothing moves unless something is working.
+ */
+
+:root {
+  /* The room. Faintly green-grey, lit at one end, and mostly switched off. */
+  --room: #1c1d18;
+  --room-deep: #101110;
+  --wall-line: #33352c;
+
+  /* The plastic. Warm beige, greying where it ages. */
+  --beige: #dedbd2;
+  --beige-lit: #f0eee8;
+  --beige-dim: #b4b1a7;
+  --beige-ink: #4b4a44;
+
+  /* The phosphor. Bone with the faintest green in it; amber for anything waiting. */
+  --phosphor: #cfc9b4;
+  --phosphor-dim: #8b8776;
+  --amber: #e6b25e;
+  --severance: #8fae6a;
+
+  /* The one piece of red on the page: a pane that will not act (B3). Always a state and never an
+   * alarm — nothing is broken when it is showing, which is why it is a rusted red rather than a
+   * safety one. It is the same red the pane that has fallen off has been using since before there
+   * was a name for it. */
+  --locked: #b4593c;
+
+  /* Type. Monospaced throughout: the panes are, and the signage pretends to be a printout. */
+  --mono: ui-monospace, "Cascadia Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  --tracking: 0.18em;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--mono);
+  color: var(--phosphor);
+  background:
+    radial-gradient(140% 110% at 50% -10%, #262720 0%, var(--room) 45%, var(--room-deep) 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--beige); }
+
+/* --- the institutional frame the whole page sits in ------------------------------------ */
+
+.sheet {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 2.6rem 1.6rem 3rem;
+}
+
+/* A session is not a document: it is a screen. On the pane pages the sheet becomes a column
+ * that owns the whole viewport, and the monitors take everything the signage does not. */
+body[data-mode="single"] .sheet,
+body[data-mode="multi"] .sheet {
+  max-width: none;
+  height: 100dvh;
+  padding: 0.6rem 0.85rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+body[data-mode="single"] .masthead,
+body[data-mode="multi"] .masthead {
+  padding-bottom: 0.45rem;
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--wall-line);
+  padding-bottom: 0.8rem;
+  margin-bottom: 1.6rem;
+}
+
+/* The controls: small, in the room's voice, and never in front of the screens. */
+.masthead .controls {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.masthead button {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--wall-line);
+  border-radius: 4px;
+  padding: 0.28rem 0.5rem;
+  cursor: pointer;
+}
+
+.masthead button:hover { color: var(--phosphor); border-color: #4a4c40; }
+.masthead button[aria-pressed="true"] {
+  color: #0f0c05;
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+/* The games page, from the masthead: a link rather than a button, in the buttons' own clothes.
+ * It leaves this page — the list of what has been played and what has been written up about it is
+ * a page of its own (spec 05 §6.1) — and a link that looked like a switch would be a lie about
+ * what pressing it does. */
+.masthead a.link {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--wall-line);
+  border-radius: 4px;
+  padding: 0.28rem 0.5rem;
+  text-decoration: none;
+}
+.masthead a.link:hover { color: var(--phosphor); border-color: #4a4c40; }
+
+.masthead .aside { margin-left: auto; }
+
+/* The danger level: a segmented control — three buttons in one housing, one of them pressed
+ * (spec 05 §5.1).
+ *
+ * The housing is what makes it read as one choice rather than three switches, and the seams are
+ * the borders the buttons already have: the group takes the rounding and the border, the buttons
+ * inside it square off against each other, and the pressed one is filled exactly as a pressed
+ * masthead button is. The gap around it is larger than the switches' own, because it is a
+ * different kind of thing sitting beside them. */
+.masthead .segmented {
+  display: inline-flex;
+  margin-left: 0.5rem;
+  border: 1px solid var(--wall-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.masthead .segmented button {
+  border: none;
+  border-radius: 0;
+  border-left: 1px solid var(--wall-line);
+}
+
+.masthead .segmented button:first-child { border-left: none; }
+.masthead .segmented button:hover { background: rgba(255, 255, 255, 0.06); }
+.masthead .segmented button[aria-pressed="true"] { color: #0f0c05; background: var(--amber); }
+.masthead .segmented button:focus-visible { outline: 1px solid var(--phosphor); outline-offset: -2px; }
+
+/* The pace control (spec 05 §5.1): a slider on a strip of the same plastic as everything else,
+ * under the companion's monitor in the multiview and in the bar on the one-screen page. The
+ * number is the level, the caption says whose state it shows, and neither pretends to be the
+ * session's own answer — the daemon publishes no session state, so this is what the page last
+ * sent. */
+.speedpanel {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--wall-line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.speedpanel label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+}
+
+.speedpanel input[type="range"] {
+  flex: 1 1 auto;
+  min-width: 6rem;
+  accent-color: var(--amber);
+  background: transparent;
+  cursor: pointer;
+}
+
+.speedpanel .value {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+  min-width: 4.6rem;
+  text-align: right;
+}
+
+.speedpanel .note {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--phosphor-dim);
+}
+
+/* The cell that carries a panel under its pane: the monitor gives up the height, the panel takes
+ * what it needs, and the fit arithmetic in app.js measures whatever is left. */
+.panes .cell[data-panel] { grid-template-rows: auto minmax(0, 1fr) auto; }
+
+/* A cell's own pace strip, when it is standing on plastic rather than on a monitor. */
+.cell[data-shape="panel"] .speedpanel { border-radius: 6px; }
+
+.masthead h1 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  margin: 0;
+  color: var(--beige-lit);
+}
+
+.masthead .aside {
+  margin-left: auto;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--phosphor-dim);
+}
+
+/* The way out of the building: one link, in the room's own voice. */
+.masthead .repo {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--phosphor-dim);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+  padding-bottom: 1px;
+}
+
+.masthead .repo:hover { color: var(--amber); }
+
+h2 {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking);
+  color: var(--phosphor-dim);
+  margin: 2rem 0 0.7rem;
+  text-transform: uppercase;
+}
+
+/* --- the panes -------------------------------------------------------------------------- */
+
+.panes { display: grid; gap: 1rem; }
+
+/* One screen, filling the page it was given. */
+body[data-mode="single"] .panes {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Three screens: the two you watch side by side, the same width and so the same size on the
+ * desk — the game has nothing to gain from being the wider of two monitors, since the story
+ * wraps at eighty columns either way — and the strip you type into across the bottom, three
+ * lines deep. A third full monitor down the page would only be more plastic and less text. */
+body[data-mode="multi"] .panes {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "game companion"
+    "hands hands";
+}
+
+.panes .cell[data-seat="game"] { grid-area: game; }
+.panes .cell[data-seat="companion"],
+.panes .cell[data-seat="quill"] { grid-area: companion; }
+.panes .cell[data-shape="strip"] { grid-area: hands; }
+
+@media (max-width: 860px) {
+  body[data-mode="multi"] .panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: none;
+    height: auto;
+  }
+  /* With no areas defined, the names above are unknown line names and every cell resolves to the
+   * same implicit cell — so all three panes were drawn on top of each other (measured at 345 px:
+   * one rectangle, `[46, 86, 271, 593]`, for all three). The placement has to be given up as well
+   * as the areas. */
+  body[data-mode="multi"] .panes .cell { grid-area: auto; }
+  body[data-mode="multi"] .sheet { height: auto; }
+
+  /* With no definite height to fit into, a stage takes its height from its width and the
+   * monitor still fits it exactly. */
+  .stage { aspect-ratio: 1000 / 880; }
+}
+
+.cell { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 0.4rem; min-height: 0; }
+
+/* The strip is sized by its lines, not by the room: three of them, which is all a typed
+ * sentence needs to sit above the prompt. */
+.cell[data-shape="strip"] { grid-template-rows: auto auto; }
+
+.cell .signage {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  font-size: 0.66rem;
+  letter-spacing: var(--tracking);
+  color: var(--phosphor-dim);
+}
+
+.cell .signage .name { color: var(--phosphor); }
+.cell .signage .size { margin-left: auto; font-variant-numeric: tabular-nums; }
+.cell .signage .rule { flex: 1; border-bottom: 1px solid var(--wall-line); }
+
+/* A pane's own type size: two small buttons and the answer they are sitting at. */
+.cell .signage .font {
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.cell .signage .font button {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  line-height: 1;
+  color: var(--phosphor-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--wall-line);
+  border-radius: 3px;
+  padding: 0.12rem 0.32rem;
+  cursor: pointer;
+}
+
+.cell .signage .font button:hover { color: var(--phosphor); border-color: #4a4c40; }
+
+.cell .signage .font .value {
+  min-width: 2.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--phosphor);
+}
+
+/* The monitor is sized to the largest 1000:880 rectangle that fits, and never given a definite
+ * width by CSS — so the image and the overlays below stay in step at every size. */
+.monitor {
+  position: relative;
+  aspect-ratio: 1000 / 880;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 auto;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.55));
+}
+
+/* In a pane the fit is decided by the page instead (fitMonitor in app.js): a tube has to be the
+ * largest exact 1000:880 box in its cell, and every CSS arrangement of that either overflows
+ * the cell or collapses to nothing. The stage is the cell's own area, which is what gets sized. */
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stage .monitor {
+  flex: 0 0 auto;
+  aspect-ratio: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+}
+
+.monitor img.shell { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* The tube: x 46..954, y 46..792 of the 1000x880 frame. */
+.monitor .screen {
+  position: absolute;
+  left: 4.6%;
+  top: 5.2273%;
+  width: 90.8%;
+  height: 84.7727%;
+  border-radius: 1.7%/2.1%;
+  overflow: hidden;
+  background: #0f0c05;
+}
+
+.monitor .screen .xterm { height: 100%; padding: 0.5rem 0.65rem; }
+.monitor .screen .xterm-viewport { background: transparent !important; }
+
+/* Glass: scanlines and a corner falloff, over the text, never in front of the mouse. */
+.monitor .glass {
+  position: absolute;
+  left: 4.6%;
+  top: 5.2273%;
+  width: 90.8%;
+  height: 84.7727%;
+  border-radius: 1.7%/2.1%;
+  pointer-events: none;
+  /* The rolling bar below is clipped to the tube. Without this it escapes the monitor, the page
+   * grows a scrollbar, the panes get narrower, the fit recomputes, and the whole page thrashes
+   * — which is exactly what it did the first time it was switched on. */
+  overflow: hidden;
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.17) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(125% 125% at 50% 44%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* --- the crt --------------------------------------------------------------------------- */
+
+/* On the game screen only, and on the machine's own terms: a shadow mask, the bloom that a
+ * bright phosphor throws on the glass in front of it, and a faint bar that rolls down the tube
+ * the way a real one does when it is warming up. All of it is decoration over a pane the
+ * daemon has already drawn — none of it is ever in front of the mouse. */
+.monitor.crt .glass {
+  background-image:
+    /* the shadow mask: fine vertical triads, which is what makes a CRT look like a CRT */
+    repeating-linear-gradient(to right,
+      rgba(255, 0, 0, 0.030) 0 1px, rgba(0, 255, 0, 0.030) 1px 2px,
+      rgba(60, 90, 255, 0.030) 2px 3px),
+    repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.26) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(115% 105% at 50% 44%, rgba(230, 178, 94, 0.055) 0%, rgba(0, 0, 0, 0) 55%),
+    radial-gradient(130% 130% at 50% 44%, rgba(0, 0, 0, 0) 48%, rgba(0, 0, 0, 0.62) 100%);
+}
+
+.monitor.crt .glass::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 9%;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.045) 50%, rgba(255, 255, 255, 0) 100%);
+  /* A transform, not `top`: this must never touch layout, or the panes resize as it rolls. */
+  animation: crt-roll 8s linear infinite;
+}
+
+@keyframes crt-roll {
+  from { transform: translateY(-120%); }
+  to { transform: translateY(1200%); }
+}
+
+/* A tube that is switched on is never perfectly still, but nobody should be made to watch a
+ * strobe: the hum is below the threshold of noticing, and it stops entirely on request. */
+@media (prefers-reduced-motion: reduce) {
+  .monitor.crt .glass::after { animation: none; opacity: 0; }
+}
+
+/* The lamps, on the frame's control strip: three lenses at cx 866 / 898 / 930, cy 832, in the
+ * order the SVG draws them (the screen, the player, the companion). Each is a dark lens until
+ * the pane it watches moves bytes, and each is its own element so one can be lit while another
+ * is dark. */
+.monitor .lamps {
+  position: absolute;
+  inset: 0;
+  /* The strip covers the whole tube and is almost entirely empty, so it must not be the thing
+   * under the pointer: with it hittable, a wheel over the game's screen lands on an empty div,
+   * `scrollTop` never moves, and neither the scrollbar nor the scrollback works. Spec 05 §4's
+   * rule — decorative things are over the pane, never in front of the mouse — missed this one.
+   * The lenses take the pointer back, so the tooltips that name the three lamps keep working. */
+  pointer-events: none;
+}
+
+.monitor .lamps .led { pointer-events: auto; }
+
+.monitor .lamps .led {
+  position: absolute;
+  top: 94.5455%;
+  width: 1.7%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #2a2010;
+  transition: background 90ms linear, box-shadow 90ms linear;
+}
+
+.monitor .lamps .led[data-signal="screen"] { left: 93%; }
+.monitor .lamps .led[data-signal="typing"] { left: 89.8%; }
+.monitor .lamps .led[data-signal="quill"] { left: 86.6%; }
+
+.monitor .lamps .led.on {
+  background: var(--amber);
+  box-shadow: 0 0 10px 2px rgba(230, 178, 94, 0.55);
+}
+
+/* A lamp the daemon is holding lit for the whole of a turn (spec 02 §8.5).
+ *
+ * Not a flash: a slow pulse, about a second, for as long as the companion is working — from the
+ * first model call leaving until the reply has been delivered. It is the only lamp lit by a fact
+ * rather than by bytes, and a steady light would read as a fault on a panel where the other two
+ * blink; a one-second breath reads as "still going", which is exactly what it is. */
+.monitor .lamps .led.held {
+  background: var(--amber);
+  animation: led-working 1s ease-in-out infinite;
+}
+
+@keyframes led-working {
+  0%, 100% {
+    box-shadow: 0 0 6px 1px rgba(230, 178, 94, 0.45);
+    filter: brightness(0.82);
+  }
+  50% {
+    box-shadow: 0 0 14px 3px rgba(230, 178, 94, 0.7);
+    filter: brightness(1.15);
+  }
+}
+
+/* Somebody who has asked their machine not to animate things gets a plain steady light: the fact
+ * is that it is working, and the pulse is only the shape of the telling. */
+@media (prefers-reduced-motion: reduce) {
+  .monitor .lamps .led.held { animation: none; filter: none; box-shadow: 0 0 12px 2px rgba(230, 178, 94, 0.6); }
+}
+
+/* --- the plain chassis: the strip, and the panel ---------------------------------------- */
+
+/* Not a monitor. A piece of beige plastic with phosphor sunk into it: three lines deep for the
+ * pane you type into, and the full height of the pane for the companion's words. Same plastic
+ * either way, and neither one spends a bezel on being decorative. */
+.cell[data-shape="strip"] .strip,
+.cell[data-shape="panel"] .panel {
+  position: relative;
+  padding: 5px 7px;
+  border: 1px solid #a29f96;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #e8e5de 0%, #d3d0c7 60%, #b9b6ad 100%);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Three lines of it, which is a prompt, what you are writing, and the answer to it. */
+.cell[data-shape="strip"] .strip { height: 78px; }
+
+/* A monitor's worth of plastic with none of its furniture. */
+.cell[data-shape="panel"] .panel { height: 100%; }
+
+.cell[data-shape="strip"] .strip .screen,
+.cell[data-shape="panel"] .panel .screen {
+  position: relative;
+  height: 100%;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #0f0c05;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.cell[data-shape="strip"] .strip .screen .xterm { height: 100%; padding: 0.28rem 0.55rem; }
+.cell[data-shape="panel"] .panel .screen .xterm { height: 100%; padding: 0.5rem 0.65rem; }
+
+/* A pane that has fallen off shows it in the signage rather than the screen. */
+.cell.down .signage .name { color: var(--beige-dim); }
+.cell.down .signage .name::after { content: " · no signal"; color: #a8654a; }
+
+/* The line being typed is holding the companion back (B3).
+ *
+ * The state is the daemon's and the words are the daemon's; all this does is show them, on the
+ * pane the player is typing in and nowhere else. Three tells, because the fact has three
+ * readers: the chip says it in words, the signage name goes red so a glance at the row is
+ * enough, and the chassis takes a lit rim so the pane looks the way it behaves. Nothing here
+ * writes a line — this is the moment a line would be least welcome.
+ *
+ * Red rather than the amber of something waiting, because this is not the machine being busy: it
+ * is the machine doing as it is told and refusing to do anything else. */
+.cell.locked .signage .name { color: var(--locked); }
+
+.cell.locked .signage .locked {
+  margin-left: 0.6rem;
+  padding: 0.1rem 0.4rem;
+  color: var(--beige-lit);
+  background: var(--locked);
+  border-radius: 3px;
+  letter-spacing: var(--tracking);
+}
+
+/* The chassis takes a lit rim. An outline and not a border: the strip is 78px tall because that
+ * is three lines of text, and a border would take those pixels off the pane. */
+.cell.locked .strip,
+.cell.locked .panel,
+.cell.locked .monitor {
+  outline: 1px solid var(--locked);
+  outline-offset: 1px;
+}
+
+/* --- the homepage ---------------------------------------------------------------------- */
+
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 2rem; }
+
+@media (max-width: 900px) { .intro { grid-template-columns: 1fr; } }
+
+.prose { max-width: 46ch; font-size: 0.86rem; line-height: 1.65; color: #b9b5a6; }
+.prose p { margin: 0 0 0.9rem; }
+.prose strong { color: var(--beige-lit); font-weight: 600; }
+
+/* The instruction card: laminate, dark ink, and the two routes as rows you cannot miss. */
+.card {
+  background: linear-gradient(180deg, var(--beige-lit), var(--beige));
+  border: 1px solid #a9a69c;
+  border-radius: 6px;
+  padding: 1.2rem 1.3rem 1.3rem;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.45);
+  color: var(--beige-ink);
+}
+
+.card h2 {
+  color: #6d6a60;
+  margin: 0 0 0.9rem;
+  font-size: 0.68rem;
+}
+
+.card .row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 0.2rem;
+  border-top: 1px solid rgba(75, 74, 68, 0.22);
+  text-decoration: none;
+  color: #2f2e2a;
+}
+
+.card .row:last-child { border-bottom: 1px solid rgba(75, 74, 68, 0.22); }
+.card .row:hover { background: rgba(255, 255, 255, 0.45); }
+.card .row .key { font-weight: 600; letter-spacing: 0.06em; }
+.card .row .what { color: #6d6a60; font-size: 0.76rem; }
+.card .row .go { margin-left: auto; color: #6d6a60; }
+
+.card .foot {
+  margin-top: 0.9rem;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: #6d6a60;
+}
+
+/* A screen with something printed on it rather than a terminal in it. */
+.printed {
+  position: absolute;
+  inset: 0;
+  padding: 1.1rem 1.3rem;
+  font-family: var(--mono);
+  font-size: clamp(7px, 1.35vh, 13px);
+  line-height: 1.5;
+  color: var(--phosphor);
+  text-shadow: 0 0 6px rgba(230, 178, 94, 0.25);
+  white-space: pre;
+  overflow: hidden;
+}
+
+.printed .dim { color: var(--phosphor-dim); }
+.printed .amber { color: var(--amber); }

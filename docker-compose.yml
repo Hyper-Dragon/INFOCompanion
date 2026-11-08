@@ -1,0 +1,285 @@
+# INFOCompanion — container-first deployment (§5).
+#
+# One player = one container (§5.3 decision 7): the daemon owns the game session
+# and the companion, so several SSH sessions are just windows onto the same player.
+#
+# Secrets come from .env (see .env.example). DEEPSEEK_API_KEY is required for the
+# companion; without it the daemon still serves the game with the companion
+# offline, and the agent says so plainly.
+
+services:
+  infocompanion:
+    build:
+      context: .
+      dockerfile: Build/Dockerfile
+    image: infocompanion:local
+    container_name: infocompanion
+
+    ports:
+      # The session itself, as SSH panes.
+      - "${INFOCOMPANION_HOST_PORT:-2223}:2222"
+      # The same panes in a browser (Source/WebUI/). One page, one session, one person, and no
+      # authentication — see that project's README before putting it anywhere public.
+      - "${INFOCOMPANION_WEBUI_HOST_PORT:-8080}:8080"
+
+    volumes:
+      # Story files and sidecars, auto-discovered. A game may sit beside an optional
+      # `<stem>.md` — what came in the box with it, put in front of the companion when the
+      # game loads (`G24a`–`G24c`). On the first start the entry point seeds the image's
+      # bundled assets into this directory — copy-if-missing, never overwriting — so the
+      # bundled Zork I and the sidecars appear once and your own files are untouched.
+      # **Do not mount this read-only**: the seed is a hard failure otherwise (`P4`).
+      - ./Assets/games:/games
+      # The daemon's own storage: saves/, notebook/, logs/, current-game. Also receives the
+      # bundled agent-config.json, core-config.json and webui-config.json if they are not already
+      # there.
+      - ./state:/state
+      # The persona and the engine prompt, so iteration needs no rebuild (§10.1, §9.3).
+      # Seeded from the image's pack when missing, then yours to edit. Writable by design.
+      - ./Assets/prompts:/prompts
+      # The configuration the daemon actually reads: this file, mounted read-only over whatever a
+      # bare boot left in state/ (state/ is runtime and is gitignored). **Edit
+      # Assets/agent-config.json** — the copy under state/ is only the seeder's, and it is shadowed
+      # by this mount whenever compose runs.
+      - ./Assets/agent-config.json:/state/agent-config.json:ro
+      # The daemon's own cadences and queue depths, and the bridge's pane geometry — same
+      # arrangement: edit the file under Assets/, the copy in state/ is only the seeder's.
+      # Precedence is one rule: an environment variable beats the file (`D5`, `D9`).
+      - ./Assets/core-config.json:/state/core-config.json:ro
+      - ./Assets/webui-config.json:/state/webui-config.json:ro
+
+    environment:
+      # Deployment settings are environment variables: in production this is never launched from a
+      # CLI. The tuning that belongs with the code — cadences, queue depths, pane sizes — is in the
+      # three JSON files mounted above, and where both name the same setting the environment wins.
+      INFOCOMPANION_PORT: "2222"
+      INFOCOMPANION_BIND: "0.0.0.0"
+      INFOCOMPANION_GAMES_DIR: /games
+      INFOCOMPANION_STATE_DIR: /state
+      # The bundled story plays first by default; after that the daemon remembers the last
+      # game in state/current-game, so this only decides the very first evening (`P5`–`P6`).
+      INFOCOMPANION_GAME: "${INFOCOMPANION_GAME:-zork1}"
+      INFOCOMPANION_DFROTZ: /usr/games/dfrotz
+      INFOCOMPANION_TURN_TIMEOUT_MS: "${INFOCOMPANION_TURN_TIMEOUT_MS:-400}"
+      INFOCOMPANION_AUTOSAVE_TURNS: "${INFOCOMPANION_AUTOSAVE_TURNS:-5}"
+
+      INFOCOMPANION_AUTH_USER: "${INFOCOMPANION_AUTH_USER:-player}"
+      INFOCOMPANION_AUTH_PASSWORD: "${INFOCOMPANION_AUTH_PASSWORD:-letsplay}"
+
+      # The web interface (WebUI/), started by the entry point behind the daemon. Panes are
+      # configuration rather than HTML, so the three-screen page follows these two lines.
+      INFOCOMPANION_WEB_PORT: "8080"
+      INFOCOMPANION_PANE_SINGLE: "${INFOCOMPANION_PANE_SINGLE:-player}"
+      INFOCOMPANION_PANE_MULTI: "${INFOCOMPANION_PANE_MULTI:-game,companion,me}"
+      INFOCOMPANION_NO_WEBUI: "${INFOCOMPANION_NO_WEBUI:-false}"
+      # The voice is the **persona's**: it is named in that file's front matter, not here, so
+      # swapping the character carries its voice with it (`C61`). What a
+      # deployment says is *where* it is spoken. Blank is the browser's own voice reading the lines,
+      # which is a supported evening rather than a gap; a URL is an endpoint doing the speaking, and
+      # it has to answer the OpenAI speech shape. Start the reference one with
+      # `--profile voice` (see the `voice` service at the bottom of this file).
+      INFOCOMPANION_VOICE_URL: "${INFOCOMPANION_VOICE_URL:-}"
+      INFOCOMPANION_VOICE_MODEL: "${INFOCOMPANION_VOICE_MODEL:-kokoro}"
+      INFOCOMPANION_VOICE_RATE: "${INFOCOMPANION_VOICE_RATE:-24000}"
+      # How fast the voice says it. **1.0 is "no opinion" and sends no field at all**; the reference
+      # pair is set to 1.3, and that is arithmetic rather than taste: this voice says ~195 words a
+      # minute at 1.0 (measured), the page writes at 240 (`INFOCOMPANION_PACE_MEDIUM`), and 240/195 is
+      # why this region of the knob is the right one. **It is not a linear multiplier** — 1.3 measured
+      # at 1.18x less audio — so this lands the voice at roughly 230-240 wpm: near the pace, rather
+      # than the quarter of a line behind it that 1.0 gives (`V20.2`). Rates vary line by line too, so
+      # a deployment with a different voice measures its own; nothing here compensates for a pace
+      # somebody changed.
+      INFOCOMPANION_VOICE_SPEED: "${INFOCOMPANION_VOICE_SPEED:-1.3}"
+
+      INFOCOMPANION_AGENT_CMD: /usr/local/bin/infocompanion-agent
+      INFOCOMPANION_NO_AGENT: "${INFOCOMPANION_NO_AGENT:-false}"
+      # Who the companion is, and who the player is. Drop `Assets/prompts/persona/<slug>.txt` in and set
+      # the slug — the name comes from that file's own front matter, so this is the only thing an
+      # operator sets (`C61`–`C67`). `INFOCOMPANION_PROMPT_PATH` overrides the lot, for a
+      # personality kept somewhere else entirely.
+      INFOCOMPANION_PERSONA: "${INFOCOMPANION_PERSONA:-james}"
+      # Who is at the keyboard, and how they are referred to. Preferred pronouns rather than a
+      # gender, because that is the thing the companion actually needs and the only thing it can
+      # be told without being told something untrue. The default is neutral on purpose.
+      INFOCOMPANION_PLAYER_NAME: "${INFOCOMPANION_PLAYER_NAME:-Peter}"
+      INFOCOMPANION_PLAYER_PRONOUNS: "${INFOCOMPANION_PLAYER_PRONOUNS:-They/Them}"
+      # The companion's own pronouns. Empty means the prompt says nothing about them, and the model
+      # is told to use the name rather than reach for a guess.
+      INFOCOMPANION_AGENT_PRONOUNS: "${INFOCOMPANION_AGENT_PRONOUNS:-}"
+      # The engine is fixed; the personality is the file anybody tunes.
+      INFOCOMPANION_ENGINE_PATH: /prompts/engine.txt
+
+      # Pane colours. Passed through blank when unset, which the daemon reads as "use the
+      # default" — so an unset variable can never strip the palette.
+      INFOCOMPANION_COLORS: "${INFOCOMPANION_COLORS:-auto}"
+      INFOCOMPANION_COLOR_COMMAND: "${INFOCOMPANION_COLOR_COMMAND:-}"
+      INFOCOMPANION_COLOR_SPEECH: "${INFOCOMPANION_COLOR_SPEECH:-}"
+      INFOCOMPANION_COLOR_THOUGHT: "${INFOCOMPANION_COLOR_THOUGHT:-}"
+      INFOCOMPANION_COLOR_NOTICE: "${INFOCOMPANION_COLOR_NOTICE:-}"
+      INFOCOMPANION_COLOR_PROMPT: "${INFOCOMPANION_COLOR_PROMPT:-}"
+      INFOCOMPANION_COLOR_PLAYER: "${INFOCOMPANION_COLOR_PLAYER:-}"
+
+      # How fast the words arrive (`S35`–`S40`). The rates are words a minute, and they are
+      # spelled out here rather than passed through blank the way the colours are: clap has no
+      # "blank means default" for a number, so an empty variable is a parse error and a daemon that
+      # will not start. `INFOCOMPANION_PACE` is the level a session with no browser starts at, and
+      # the ceiling is the longest a turn can take to arrive however long it is.
+      INFOCOMPANION_PACE: "${INFOCOMPANION_PACE:-medium}"
+      INFOCOMPANION_PACE_VERYSLOW: "${INFOCOMPANION_PACE_VERYSLOW:-60}"
+      INFOCOMPANION_PACE_SLOW: "${INFOCOMPANION_PACE_SLOW:-120}"
+      INFOCOMPANION_PACE_MEDIUM: "${INFOCOMPANION_PACE_MEDIUM:-240}"
+      INFOCOMPANION_PACE_FAST: "${INFOCOMPANION_PACE_FAST:-480}"
+      INFOCOMPANION_PACE_CEILING: "${INFOCOMPANION_PACE_CEILING:-20}"
+
+      # Required for the companion to think, for whatever endpoint `agent-config.json` names; never
+      # baked into the image or the repo. The older name is still read for one release, so a
+      # deployment mid-migration keeps working and says so in the log.
+      INFOCOMPANION_LLM_API_KEY: "${INFOCOMPANION_LLM_API_KEY:-}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      # Where the model is called, and which one. Blank means the config file's answer, so these
+      # change nothing unless they are set — and set, they are how a deployment moves to another
+      # provider without editing a mounted file (an environment variable beats the file, `D5`).
+      INFOCOMPANION_LLM_BASE_URL: "${INFOCOMPANION_LLM_BASE_URL:-}"
+      INFOCOMPANION_LLM_MODEL: "${INFOCOMPANION_LLM_MODEL:-}"
+      RUST_LOG: "${RUST_LOG:-info}"
+      TERM: xterm-256color
+      LANG: en_GB.UTF-8
+
+    restart: unless-stopped
+
+    # The daemon's own shutdown is not instant, and it must be allowed to finish.
+    #
+    # `docker stop` gives ten seconds by default and then sends SIGKILL; measured 2026-10-01, a clean
+    # stop took **30 s** — the checkpoint script waits out its own five-second deadline, the core then
+    # waits fifteen for the game actor (`core shutdown timed out grace=15s`), and only then does it
+    # say goodbye to the agent, which is where the session's summary is written. With the default
+    # grace the daemon was killed *mid-shutdown*, before any of that. This is a cap rather than a
+    # delay — a healthy stop finishes when it finishes — and it is the honest place for a budget the
+    # manifest of the thing that owns it (`D11`).
+    stop_grace_period: 60s
+
+    # Memory limits deliberately set memory *and* swap to the same value. When only
+    # memory is set, Docker defaults the swap limit to twice the memory, which lets
+    # this container borrow the host's swap and thrash the whole machine. Capping
+    # both means a spike kills and restarts just this container.
+    mem_limit: 512m
+    memswap_limit: 512m
+
+  # The voice: **a reference endpoint, not part of the deployment** (`V33`).
+  # The project owns the interface, not an implementation of it — so what is here is something for
+  # the interface to point *at*: the tests run against it, and anyone deciding where their own voice
+  # should run can hear one working first. It is off unless it is asked for:
+  #
+  #   docker compose --profile voice up -d
+  #   INFOCOMPANION_VOICE_URL=http://voice:8880/v1   (with a persona whose front matter names a voice)
+  #
+  # Nothing about it is required, and nothing about it is supported: pointing the bridge at nothing,
+  # at another box, or at a cloud endpoint is a deployment like any other. This is one way to have a
+  # voice, not the way INFOCompanion has one.
+  voice:
+    profiles: ["voice"]
+    # **The GPU build.** Synthesis is the one part of this project a CPU makes feel slow: on four
+    # threads a sentence takes ~2.2 s of silence before its first sample is written, and that pause
+    # is the thing a reader notices (`V29.1` splits a line so the pause is paid once, not per line).
+    # The same program and the same API answer either way; only the arithmetic moves.
+    #
+    # What it needs is a host thing, not a compose thing, and each part fails differently:
+    #   * the NVIDIA container toolkit installed in the distro that runs dockerd;
+    #   * `docker info` listing `nvidia` among its runtimes;
+    #   * `docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi` printing a card.
+    # None of that follows from `nvidia-smi` working on the host itself, which is why it is spelled
+    # out here.
+    #
+    # Measured on the reference box (RTX 3060 Laptop, 6 GB): a three-sentence line — 15.45 s of audio —
+    # had its first samples at 0.43 s and was complete at 0.80 s, about 19x realtime, holding 1.3 GiB
+    # resident and 1.4 GiB of VRAM. The same line on four CPU threads was first heard at ~2.2 s and
+    # complete at 8.7 s. Both are faster than the audio is played, which is what makes `V7` (readable
+    # while it is still being made) worth more than an optimisation; what the card buys is the pause
+    # before the first word, the part a reader actually notices, which `V29.1` pays once per line.
+    #
+    # On a host with no card, use the CPU line instead and **delete the `deploy:` block below**. That
+    # build is not a degraded mode, only a slower start: `bm_fable` present, first samples in 13 ms on
+    # the endpoint's own clock, and 5.3 s of speech made in 3.7 s on four threads.
+    #
+    # Pinned by version rather than `latest`, the same habit as every other third-party artifact.
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.9.0
+    # image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0   # no card: use this, and delete `deploy:`
+    # The fork this was first tried against (`sbx2020/kokoro-fastapi`) is a year behind upstream,
+    # 15 GB rather than 3.3 GB (CPU build), and ships **no model at all** — it expects one mounted by
+    # hand. Either build of this one carries its own weights, so there is no fetcher service here:
+    #   build:
+    #     context: https://github.com/sbx2020/kokoro-fastapi.git#258b5fff543458c91b82cd3a3decb4b2d34e0ea3
+    #     dockerfile: Dockerfile.cpu
+    #
+    # The card, asked for the way compose asks for one. `resources.reservations.devices` is the only
+    # key under `deploy:` that compose honours outside swarm mode — everywhere else in this file the
+    # limits are `mem_limit`/`cpus` and this block would be silently ignored, here it is the thing
+    # that makes the GPU visible to the container.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    container_name: infocompanion-voice
+    ports:
+      # Published so the endpoint can be asked directly: `curl` into a file is how its output is
+      # checked without a browser. The bridge reaches it over the
+      # compose network either way, so this is a convenience rather than a requirement — and it is
+      # bound to the loopback, because a reference endpoint has no business answering the LAN. Add
+      # an address in front of it if you want it reachable from somewhere else.
+      - "127.0.0.1:${INFOCOMPANION_VOICE_HOST_PORT:-8880}:8880"
+    environment:
+      # The weights are already inside the image, and a new volume below starts as a copy of them, so
+      # this asks for a download only when that volume has been emptied. It happens once rather than
+      # at every start, and no weights of ours are baked into anything.
+      DOWNLOAD_MODEL: "true"
+      HOST: "0.0.0.0"
+      PORT: "8880"
+      # Which voice is loaded and warmed before the first request arrives. This decides nothing about
+      # what is said — the bridge names the voice on every request, because it is the persona's
+      # (`C61`) — it only means the voice we are about to ask for is already
+      # resident, instead of being loaded on the first line of the evening. `bm_fable` is what the
+      # shipped persona asks for; change both together.
+      DEFAULT_VOICE: "bm_fable"
+    volumes:
+      # Both builds expect the weights here (`MODEL_DIR`), so the volume carries over between them —
+      # and in practice it does: the GPU build read the 335 MB the CPU build had fetched, without
+      # downloading anything. Their users differ, though (uid 1000 on the CPU build, 1001 on the GPU
+      # one), so a switch can leave the endpoint unable to *write*. Removing the volume lets the image
+      # refill it, but a merely-stopped container still holds it — `volume is in use` — so remove the
+      # container too, in that order:
+      #   docker compose --profile voice rm -sf voice && docker volume rm infocompanion_voice-model
+      - voice-model:/app/api/src/models
+    healthcheck:
+      # Python rather than curl: this image is python-based by definition, and whether it happens to
+      # carry a curl binary is not something to find out on somebody else's machine.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8880/health', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # Generous: the first start loads the weights, and on a build that carries none it fetches a few
+      # hundred megabytes before it can answer at all.
+      start_period: 240s
+    restart: unless-stopped
+    # Memory *and* swap to the same value, for the same reason as the container above: a cap that
+    # leaves the swap alone is a cap that lets this one thrash the machine it shares. The GPU build
+    # holds ~1.3 GiB of anonymous memory (measured: `memory.stat` anon 1333 MiB against the 3072 below,
+    # so 43%). `docker stats` reports more — ~2.5 GiB, 85% — and that is mostly reclaimable page cache,
+    # which is why this cap is judged against `anon` and not against that number: a cap sized to the
+    # reported figure would be sized to something the kernel can simply drop. Lower it here or with
+    # `INFOCOMPANION_VOICE_MEMORY` on a box that cannot spare 3 GB, but keep it above the anon floor,
+    # because an under-sized cap is an OOM kill and not a slow endpoint.
+    mem_limit: ${INFOCOMPANION_VOICE_MEMORY:-3g}
+    memswap_limit: ${INFOCOMPANION_VOICE_MEMORY:-3g}
+
+volumes:
+  # The reference voice's model. Both builds put their weights here (`MODEL_DIR`), which keeps them
+  # out of the repository, lets them survive a container rebuild, and lets either build reuse what
+  # the other fetched. Removed by `docker compose --profile voice down -v`.
+  voice-model:

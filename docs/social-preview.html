@@ -1,0 +1,91 @@
+<!doctype html>
+<!--
+  INFOCompanion — the repository's social preview, 1280x640.
+
+  GitHub takes this from Settings → Social preview → Upload an image; there is no API for it.
+
+  Rendered with the Chrome that Build/docs-pdf.sh already uses. Old headless sizes the *window*
+  rather than the viewport, which costs 84 pixels of Chrome's own furniture — hence the taller
+  window and the crop:
+
+    chrome --headless --disable-gpu --no-sandbox --hide-scrollbars \
+           --force-device-scale-factor=1 --window-size=1280,724 \
+           --screenshot=/tmp/social-raw.png docs/social-preview.html
+    python3 -c "from PIL import Image; Image.open('/tmp/social-raw.png').crop((0,0,1280,640)).save('docs/social-preview.png')"
+-->
+<html lang="en">
+<meta charset="utf-8">
+<title>INFOCompanion — social preview</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 1280px; height: 640px; overflow: hidden;
+    background: #0c0f12;
+    font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .canvas {
+    position: relative; width: 1280px; height: 640px;
+    background:
+      radial-gradient(900px 540px at 14% 4%, rgba(52, 224, 128, 0.12), transparent 62%),
+      radial-gradient(760px 520px at 96% 104%, rgba(80, 150, 255, 0.10), transparent 62%),
+      linear-gradient(158deg, #171c21 0%, #0c0f12 100%);
+  }
+  .rule {
+    position: absolute; left: 80px; top: 72px; width: 220px; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #3ddc84 0%, #4aa8ff 52%, #ff5fa2 100%);
+  }
+  .title {
+    position: absolute; left: 76px; top: 92px;
+    font-size: 90px; font-weight: 800; letter-spacing: -2.5px; line-height: 1;
+    color: #ffffff;
+  }
+  .sub {
+    position: absolute; left: 80px; top: 196px;
+    font-size: 29px; line-height: 1.2; color: #99a4ae; letter-spacing: 0.2px;
+  }
+  .tag {
+    position: absolute; left: 80px; top: 248px;
+    font-size: 30px; line-height: 1.2; color: #eef2f5;
+  }
+  .crt {
+    position: absolute; left: 80px; top: 312px; width: 800px; height: 168px;
+    border-radius: 12px; background: #04080a; overflow: hidden;
+    box-shadow: 0 0 0 6px #0a0e10, 0 0 0 7px #1c2b26,
+                inset 0 0 70px rgba(40, 255, 120, 0.10);
+  }
+  .crt pre {
+    margin: 0; padding: 15px 22px;
+    font: 21px/1.5 "Cascadia Mono", "Consolas", "DejaVu Sans Mono", monospace;
+    color: #4dff86; text-shadow: 0 0 10px rgba(45, 255, 120, 0.35);
+    white-space: pre;
+  }
+  .crt .you  { color: #b9ffcf; }
+  .crt .name { color: #7ee9ff; }
+  .cursor {
+    display: inline-block; width: 11px; height: 19px; background: #4dff86;
+    vertical-align: -3px; box-shadow: 0 0 12px rgba(45, 255, 120, 0.6);
+  }
+  .foot {
+    position: absolute; left: 80px; top: 556px;
+    font-size: 19px; color: #6c7780; letter-spacing: 0.3px;
+  }
+  .repo {
+    position: absolute; right: 80px; top: 556px;
+    font-size: 19px; color: #6c7780; letter-spacing: 0.3px;
+  }
+</style>
+<div class="canvas">
+  <div class="rule"></div>
+  <div class="title">INFOCompanion</div>
+  <div class="sub">a co-player for text adventures</div>
+  <div class="tag">Two friends, one keyboard, a green screen, on a cold night in 1983.</div>
+
+  <div class="crt"><pre><span class="you">&gt; can we get past the troll?</span>
+The troll demands a password.
+<span class="name">Quill:</span> try the word on the postcard.
+&gt; <span class="cursor"></span></pre></div>
+
+  <div class="foot">1983 &middot; one keyboard &middot; a language model in the chair beside you</div>
+  <div class="repo">github.com/hyper-dragon/infocompanion</div>
+</div>
+</html>

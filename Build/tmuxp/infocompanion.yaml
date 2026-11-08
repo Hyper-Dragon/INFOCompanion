@@ -1,0 +1,42 @@
+# INFOCompanion — co-play layout for tmuxp (§12)
+#
+#   tmuxp load Build/tmuxp/infocompanion.yaml
+#
+# The layout the spec asks for: the game top-right, htop to the left of it and the
+# logs along the bottom, so a session can be watched and played at the same time.
+#
+# Companion chatter appears in the *game* pane, tagged `[companion]` (see §12
+# decision 2: cheaper than a separate pane and it works over plain ssh). If you would
+# rather have it separate, run the game twice in two panes — but the daemon broadcasts
+# to every connected window, so the second pane would show the same stream.
+
+session_name: infocompanion
+start_directory: "."
+
+windows:
+  - window_name: play
+    layout: tiled
+    focus: true
+    panes:
+      # The game. `-o` flags avoid host-key prompts when the container is rebuilt
+      # with a fresh ephemeral key.
+      - shell_command:
+          - "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR player@localhost -p 2223"
+        start_directory: "."
+
+      # Machine health to the left: the daemon plus a self-contained .NET agent is
+      # small, so anything busy here is worth noticing.
+      - shell_command:
+          - "htop"
+        start_directory: "."
+
+      # The daemon's own log, including the agent's stderr (target `agent`).
+      - shell_command:
+          - "docker logs -f infocompanion"
+        start_directory: "."
+
+      # What the companion was thinking and what it cost. JSONL; pipe through jq if
+      # you have it, e.g. `jq -c 'select(.kind==\"llm_call\")'`.
+      - shell_command:
+          - "tail -F state/logs/agent-*.jsonl"
+        start_directory: "."

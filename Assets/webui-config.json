@@ -1,0 +1,9 @@
+{
+  "pane_cols": 80,
+  "pane_cols_min": 20,
+  "pane_cols_max": 500,
+  "pane_rows": 24,
+  "pane_rows_min": 5,
+  "pane_rows_max": 200,
+  "type_line_settle_ms": 400
+}

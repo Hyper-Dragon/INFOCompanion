@@ -1,0 +1,17 @@
+{
+  // House style. Run with: npx markdownlint-cli2 "Documents/*.md" "README.md"
+  //
+  // Disabled rules, and why:
+  //   MD013 line-length          not a convention this repo follows; the docs are prose
+  //   MD033 no-inline-html       `<c>…</c>` and `<state>` appear legitimately in prose
+  //   MD041 first-line-heading   some fragments (agent-config notes) start elsewhere
+  //   MD060 table-column-style   fires on every pre-existing table in README.md too, and
+  //                              is not auto-fixable. Re-enable only alongside a reformat
+  //                              of every table in the repo.
+  "config": {
+    "MD013": false,
+    "MD033": false,
+    "MD041": false,
+    "MD060": false
+  }
+}

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Agent.Core</RootNamespace>
+    <!-- Matches the core's INFOCOMPANION_AGENT_CMD default of
+         /usr/local/bin/infocompanion-agent. -->
+    <AssemblyName>infocompanion-agent</AssemblyName>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Agent.Llm/Agent.Llm.csproj" />
+    <ProjectReference Include="../Agent.Notebook/Agent.Notebook.csproj" />
+  </ItemGroup>
+
+  <!-- The loop's arbitration state, for the tests that assert what the *loop* does to it rather
+       than what the state does to itself: "its own words are not silence" is a wiring fact, and
+       the wiring is the half that goes missing silently (C5). -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>Agent.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

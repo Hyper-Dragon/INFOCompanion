@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 880" preserveAspectRatio="xMidYMid meet"
+     role="img" aria-label="A beige 1980s monitor">
+  <title>Monitor</title>
+  <desc>The plastic the panes are drawn on. The tube is a clean rectangle at x 46..954, y 46..792
+        of a 1000x880 frame, so a terminal can be laid over it by percentage: see the .screen and
+        .monitor rules in app.css, which must be kept in step with these numbers. The bezel is
+        deliberately thin and the lamps are where .led expects them, at cx 866 / 898 / 930, cy
+        832.</desc>
+
+  <defs>
+    <!-- The plastic: warm beige lit from above, greying into the shadow it casts on itself. -->
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0eee8"/>
+      <stop offset="0.45" stop-color="#dedbd2"/>
+      <stop offset="1" stop-color="#c0bdb4"/>
+    </linearGradient>
+
+    <!-- The two moulding steps around the tube, catching light on opposite edges. -->
+    <linearGradient id="stepLight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f4ef" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#f6f4ef" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- The recess the tube sits down inside. -->
+    <linearGradient id="well" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#302b21"/>
+      <stop offset="1" stop-color="#14110a"/>
+    </linearGradient>
+
+    <!-- The tube itself: warm at the centre, falling off to the corners. -->
+    <radialGradient id="crt" cx="0.5" cy="0.44" r="0.76">
+      <stop offset="0" stop-color="#3d3119"/>
+      <stop offset="0.55" stop-color="#231b0d"/>
+      <stop offset="1" stop-color="#0f0c05"/>
+    </radialGradient>
+
+    <!-- The glass in front of it, and the shadow it casts on its own bezel. -->
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="0.30" stop-color="#ffffff" stop-opacity="0.02"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="screenShadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.55"/>
+      <stop offset="0.10" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- The nameplate: brushed, sunken, engraved. -->
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b4b1a7"/>
+      <stop offset="1" stop-color="#d8d5cb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shell -->
+  <rect x="4" y="4" width="992" height="872" rx="46" fill="url(#shell)"
+        stroke="#a29f96" stroke-width="3"/>
+
+  <!-- Moulding: a raised rim, then a second step down to the recess. Both are kept to a thin
+       band on purpose: every millimetre of bezel is a line of the game nobody can read. -->
+  <rect x="18" y="18" width="964" height="844" rx="34" fill="none"
+        stroke="#cbc8bf" stroke-width="2"/>
+  <rect x="18" y="18" width="964" height="844" rx="34" fill="url(#stepLight)"/>
+  <rect x="28" y="28" width="944" height="824" rx="30" fill="none"
+        stroke="#aeaba1" stroke-width="1.5"/>
+
+  <!-- The recess, the tube, then the glass over both. -->
+  <rect x="36" y="36" width="928" height="766" rx="26" fill="url(#well)"
+        stroke="#9a978d" stroke-width="2"/>
+  <rect x="46" y="46" width="908" height="746" rx="16" fill="url(#crt)"/>
+  <rect x="46" y="46" width="908" height="746" rx="16" fill="url(#screenShadow)"/>
+  <rect x="46" y="46" width="908" height="746" rx="16" fill="url(#glass)"/>
+
+  <!-- Control strip: the plate on the left, vents in the middle, the lamp on the right. -->
+  <rect x="74" y="810" width="400" height="36" rx="8" fill="url(#plate)"
+        stroke="#a7a49a" stroke-width="1.5"/>
+  <rect x="78" y="814" width="392" height="28" rx="6" fill="none"
+        stroke="#c8c5bc" stroke-width="1"/>
+  <text x="92" y="836" font-family="monospace" font-size="16" letter-spacing="3.5"
+        fill="#6d6a60">INFOCOMPANION</text>
+  <text x="454" y="836" font-family="monospace" font-size="13" letter-spacing="2"
+        fill="#8c897f" text-anchor="end">IC-2</text>
+
+  <g stroke="#b6b3a9" stroke-width="2" stroke-linecap="round">
+    <line x1="500" y1="822" x2="660" y2="822"/>
+    <line x1="500" y1="832" x2="660" y2="832"/>
+    <line x1="500" y1="842" x2="660" y2="842"/>
+  </g>
+
+  <!-- The lamps: dark lenses until the panes they watch move bytes. Three, so the control strip
+       is a little status board in the multiview — the screen printing, the player typing, the
+       companion working. cx 866 / 898 / 930, and .led in app.css must be kept in step with them. -->
+  <circle cx="866" cy="832" r="13" fill="#a5a29a"/>
+  <circle cx="866" cy="832" r="13" fill="none" stroke="#94918a" stroke-width="1"/>
+  <circle cx="866" cy="832" r="8" fill="#2a2010"/>
+  <circle cx="898" cy="832" r="13" fill="#a5a29a"/>
+  <circle cx="898" cy="832" r="13" fill="none" stroke="#94918a" stroke-width="1"/>
+  <circle cx="898" cy="832" r="8" fill="#2a2010"/>
+  <circle cx="930" cy="832" r="13" fill="#a5a29a"/>
+  <circle cx="930" cy="832" r="13" fill="none" stroke="#94918a" stroke-width="1"/>
+  <circle cx="930" cy="832" r="8" fill="#2a2010"/>
+</svg>

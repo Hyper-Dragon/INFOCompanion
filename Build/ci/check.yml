@@ -1,0 +1,45 @@
+# PARKED — nothing here runs. GitHub only reads workflows from `.github/workflows/`, so this file
+# is inert where it sits; it is kept here, under the rig, until the repository goes public.
+# To enable it, move it to `.github/workflows/check.yml` unchanged.
+
+name: check
+
+# The source checks, on every push and every pull request: format, lints, markdown, and the
+# three test suites. That is `Build/check.sh --fast`, which is the same command a person runs
+# locally, so there is one definition of "green" rather than two that drift.
+#
+# What is deliberately not here is the container suite. It plays every story present in
+# `Assets/games/`, and the repository does not carry story files (Assets/games/.gitignore —
+# they are copyrighted works and this repository is meant to be public), so a fresh clone has an
+# empty library and a run of that suite would test nothing. `Build/check.sh` with no arguments
+# runs it, on a machine that has the stories.
+#
+# The toolchain comes from the runner image rather than from an action: fewer moving parts, and
+# the components the checks need are the only thing added by hand.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: source checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust components
+        run: rustup component add rustfmt clippy
+
+      - name: Node, for markdownlint
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Every check, the same way it runs at a keyboard
+        run: Build/check.sh --fast

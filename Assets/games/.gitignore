@@ -1,0 +1,12 @@
+# Your library, not the repository's.
+#
+# Story files are copyrighted works and this repository is meant to be public, so none of them
+# is tracked — not the ones in a fresh clone and not the ones you drop here. Put yours here and
+# they appear in `/games`; the entry point also seeds the bundled Zork I into this directory on
+# a bare start, and that copy is an artifact of the build.
+#
+# Only the sidecars are ours, and only they are tracked: `witness.z5` may sit beside
+# `witness.md`, our commentary on what came in that game's box (spec 02 §4.5, spec 08 §1).
+*
+!*.md
+!.gitignore

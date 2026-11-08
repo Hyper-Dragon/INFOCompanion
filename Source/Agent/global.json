@@ -1,0 +1,7 @@
+{
+  "$comment": "Pins the SDK family for the agent. rollForward keeps the build working on any 10.0.x patch/feature band, which matters because the container image and a developer machine will rarely have the exact same SDK.",
+  "sdk": {
+    "version": "10.0.100",
+    "rollForward": "latestFeature"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "shutdown_grace_seconds": 15,
+  "held_line_tick_ms": 25,
+  "command_queue": 256,
+  "fanout_queue": 512,
+  "replay_lines": 600,
+  "terminal_queue": 512,
+  "protocol_queue": 512,
+  "playback_queue": 2048,
+  "log_queue": 2048,
+  "game_tick_ms": 25,
+  "tool_turn_deadline_ms": 250,
+  "script_timeout_seconds": 5,
+  "max_deferred_checkpoint_turns": 8,
+  "max_queued_inputs": 16,
+  "exit_grace_ms": 500,
+  "prompt_settle_ms": 30,
+  "ssh_keepalive_seconds": 30,
+  "ssh_auth_rejection_seconds": 1,
+  "ssh_typing_notice_seconds": 1,
+  "agent_backoff_seconds": [1, 5, 30],
+  "agent_stable_uptime_seconds": 60
+}
