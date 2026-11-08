@@ -42,9 +42,7 @@ and Activision placed under the MIT Licence — see [THIRD-PARTY-NOTICES.md](THI
   none at all you get the game and nothing else: it takes its seat, says it cannot reach a model,
   and stays quiet.
 
-Optional: a voice endpoint answering the OpenAI speech shape, if you want the companion spoken
-
-aloud. Without one, your browser reads its lines.
+Optional: a voice endpoint answering the OpenAI speech shape, if you want the companion spoken aloud. Without one, your browser reads its lines.
 
 ### About the model
 
