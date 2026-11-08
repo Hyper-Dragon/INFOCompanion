@@ -67,14 +67,15 @@ that reason.
 
 ## Run it
 
-### 1. Build the image
+### 1. Get the image
 
 ```bash
-docker build -f Build/Dockerfile -t infocompanion .
+docker pull ghcr.io/hyper-dragon/infocompanion:latest
 ```
 
-There is no published image yet, so this is a build rather than a pull. It takes a few minutes and
-needs nothing but Docker.
+Both architectures are published — `amd64` and `arm64` — and `docker pull` picks the one you are
+on. To build it yourself instead, `docker build -f Build/Dockerfile -t infocompanion .` and use
+that name below.
 
 ### 2. Run it
 
@@ -88,7 +89,7 @@ docker run -d --name infocompanion \
   --env INFOCOMPANION_LLM_MODEL=deepseek-flash \
   -v "$PWD/games:/games" \
   -v "$PWD/state:/state" \
-  infocompanion
+  ghcr.io/hyper-dragon/infocompanion:latest
 ```
 
 `games/` fills with the bundled Zork I on first start, and never overwrites what you put there.
