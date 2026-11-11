@@ -12,7 +12,7 @@ publish = false
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-axum = { version = "0.7", features = ["ws"] }
+axum = { version = "0.8", features = ["ws"] }
 futures-util = "0.3"
 # The voice endpoint is somebody else's server (`08_webui_tts.md` §7): this is the client half of
 # that interface, and the only thing the project believes about it is an HTTP request.
